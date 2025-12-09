@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Travel Lite</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Vue.js 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入 Remix Icon 圖標庫 -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        muji: {
+                            bg: '#f7f7f7',      // 米灰色背景
+                            card: '#ffffff',    // 純白卡片
+                            text: '#4a4a4a',    // 深灰文字
+                            accent: '#7f0019',  // 無印紅 (點綴用)
+                            gray: '#dcdcdc'     // 邊框灰
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Helvetica Neue', 'Arial', 'PingFang TC', 'Heiti TC', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f2f2f2; }
+        /* 隱藏滾動條但保持功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-muji-text h-screen flex justify-center overflow-hidden">
+
+    <div id="app" class="w-full max-w-md bg-muji-bg h-full flex flex-col shadow-2xl relative overflow-hidden">
+        
+        <!-- 頂部導航欄 -->
+        <header class="bg-muji-card px-6 py-4 shadow-sm z-10 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-widest text-muji-text">{{ currentTitle }}</h1>
+            <div class="text-xs text-gray-400">{{ currentDate }}</div>
+        </header>
+
+        <!-- 主要內容區 (可滾動) -->
+        <main class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-24">
+            
+            <!-- 1. 行程表功能 -->
+            <div v-if="currentTab === 'schedule'" class="space-y-4">
+                <div v-for="(item, index) in schedule" :key="index" class="bg-muji-card p-4 rounded-xl shadow-sm border border-gray-100 flex items-start">
+                    <div class="flex flex-col items-center mr-4 min-w-[3rem]">
+                        <span class="text-2xl mb-1">{{ item.weather }}</span>
+                        <span class="text-xs font-bold text-gray-400">{{ item.time }}</span>
+                    </div>
+                    <div class="flex-1 pt-1">
+                        <h3 class="font-bold text-lg">{{ item.title }}</h3>
+                        <p class="text-sm text-gray-500 mt-1">{{ item.desc }}</p>
+                    </div>
+                </div>
+                <!-- 新增行程按鈕 (UI 示意) -->
+                <button class="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 hover:border-muji-text hover:text-muji-text transition">
+                    + 新增行程
+                </button>
+            </div>
+
+            <!-- 2. 地圖功能 -->
+            <div v-if="currentTab === 'map'" class="h-full bg-gray-200 rounded-xl overflow-hidden shadow-inner relative">
+                <!-- 這裡使用 iframe 模擬地圖，實際可換成 Google Maps Embed -->
+                <iframe 
+                    width="100%" 
+                    height="100%" 
+                    frameborder="0" 
+                    scrolling="no" 
+                    marginheight="0" 
+                    marginwidth="0" 
+                    src="https://maps.google.com/maps?q=Hong+Kong&t=&z=13&ie=UTF8&iwloc=&output=embed">
+                </iframe>
+                <div class="absolute bottom-4 left-4 right-4 bg-white p-3 rounded-lg shadow-lg opacity-90">
+                    <p class="text-sm font-bold">目前位置</p>
+                    <p class="text-xs text-gray-500">香港, 尖沙咀</p>
+                </div>
+            </div>
+
+            <!-- 3. 記帳功能 -->
+            <div v-if="currentTab === 'finance'" class="space-y-4">
+                <!-- 輸入區 -->
+                <div class="bg-muji-card p-5 rounded-xl shadow-sm">
+                    <div class="mb-3">
+                        <label class="block text-xs text-gray-500 mb-1">金額</label>
+                        <input type="number" v-model="newExpense.amount" placeholder="0.00" class="w-full text-3xl font-bold border-b border-gray-200 focus:outline-none focus:border-muji-text pb-1 bg-transparent">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs text-gray-500 mb-1">項目說明</label>
+                        <input type="text" v-model="newExpense.desc" placeholder="例如：午餐、交通" class="w-full text-sm border-b border-gray-200 focus:outline-none focus:border-muji-text pb-1 bg-transparent">
+                    </div>
+                    <div class="flex gap-2 mb-4">
+                        <select v-model="newExpense.type" class="flex-1 bg-gray-50 text-sm p-2 rounded-lg border border-gray-200 focus:outline-none">
+                            <option value="信用卡">💳 信用卡</option>
+                            <option value="現金">💵 現金</option>
+                        </select>
+                        <button @click="addExpense" class="bg-muji-text text-white px-6 py-2 rounded-lg text-sm hover:bg-black transition">記帳</button>
+                    </div>
+                </div>
+
+                <!-- 支出列表 -->
+                <div class="space-y-2">
+                    <h3 class="text-sm font-bold text-gray-400 px-1">最近支出</h3>
+                    <div v-for="(exp, index) in expenses" :key="index" class="bg-muji-card p-3 rounded-lg flex justify-between items-center shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div :class="exp.type === '信用卡' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'" class="w-8 h-8 rounded-full flex items-center justify-center text-xs">
+                                <i :class="exp.type === '信用卡' ? 'ri-bank-card-line' : 'ri-money-dollar-circle-line'"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold">{{ exp.desc }}</p>
+                                <p class="text-xs text-gray-400">{{ exp.type }}</p>
+                            </div>
+                        </div>
+                        <span class="font-mono font-bold">-{{ exp.amount }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 購物清單 -->
+            <div v-if="currentTab === 'shopping'" class="space-y-3">
+                <div class="bg-muji-card p-2 rounded-full shadow-sm flex items-center px-4 border border-gray-100">
+                    <input v-model="newShoppingItem" @keyup.enter="addShoppingItem" type="text" placeholder="新增購物項目..." class="flex-1 bg-transparent focus:outline-none text-sm">
+                    <button @click="addShoppingItem" class="text-muji-accent"><i class="ri-add-circle-fill text-2xl"></i></button>
+                </div>
+
+                <div class="space-y-2">
+                    <div v-for="(item, index) in shoppingList" :key="index" 
+                         class="flex items-center p-3 bg-muji-card rounded-lg shadow-sm transition-all duration-300"
+                         :class="{'opacity-50': item.checked}">
+                        <div @click="item.checked = !item.checked" class="cursor-pointer mr-3 text-xl">
+                            <i :class="item.checked ? 'ri-checkbox-circle-fill text-muji-text' : 'ri-checkbox-blank-circle-line text-gray-300'"></i>
+                        </div>
+                        <span :class="{'line-through text-gray-400': item.checked}" class="flex-1 text-sm">{{ item.name }}</span>
+                        <button @click="removeShoppingItem(index)" class="text-gray-300 hover:text-red-500"><i class="ri-delete-bin-line"></i></button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- 底部導航欄 -->
+        <nav class="bg-muji-card border-t border-gray-100 absolute bottom-0 w-full pb-6 pt-3 px-6 shadow-[0_-5px_15px_rgba(0,0,0,0.02)]">
+            <ul class="flex justify-between items-center">
+                <li v-for="tab in tabs" :key="tab.id">
+                    <button @click="currentTab = tab.id" class="flex flex-col items-center gap-1 transition-colors duration-300" :class="currentTab === tab.id ? 'text-muji-text' : 'text-gray-300'">
+                        <i :class="tab.icon" class="text-2xl"></i>
+                        <span class="text-[10px] tracking-wider">{{ tab.name }}</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue;
+
+        createApp({
+            setup() {
+                const currentTab = ref('schedule');
+                const currentDate = new Date().toLocaleDateString('zh-HK');
+                
+                // 導航設定
+                const tabs = [
+                    { id: 'schedule', name: '行程', icon: 'ri-calendar-event-line' },
+                    { id: 'map', name: '地圖', icon: 'ri-map-2-line' },
+                    { id: 'finance', name: '記帳', icon: 'ri-wallet-3-line' },
+                    { id: 'shopping', name: '購物', icon: 'ri-shopping-bag-3-line' }
+                ];
+
+                const currentTitle = computed(() => {
+                    const tab = tabs.find(t => t.id === currentTab.value);
+                    return tab ? tab.name : 'App';
+                });
+
+                // 1. 行程數據 (模擬天氣圖標)
+                const schedule = ref([
+                    { time: '09:00', title: '出發前往機場', desc: '搭乘機場快線', weather: '☀️' },
+                    { time: '13:30', title: '抵達東京', desc: '領取 JR Pass', weather: '☁️' },
+                    { time: '15:00', title: '飯店 Check-in', desc: '新宿燦路都廣場大飯店', weather: '🌧️' },
+                    { time: '18:00', title: '晚餐：燒肉', desc: '敘敘苑 預約號 #204', weather: '🌙' }
+                ]);
+
+                // 3. 記帳數據
+                const expenses = ref([
+                    { desc: '便利商店', amount: 45, type: '現金' },
+                    { desc: '機票尾款', amount: 3500, type: '信用卡' }
+                ]);
+                const newExpense = ref({ amount: '', desc: '', type: '信用卡' });
+
+                const addExpense = () => {
+                    if (!newExpense.value.amount || !newExpense.value.desc) return;
+                    expenses.value.unshift({ ...newExpense.value });
+                    newExpense.value.amount = '';
+                    newExpense.value.desc = '';
+                };
+
+                // 4. 購物清單數據
+                const shoppingList = ref([
+                    { name: '無印良品文具', checked: false },
+                    { name: '藥妝店 (感冒藥)', checked: true },
+                    { name: 'Uniqlo 發熱衣', checked: false }
+                ]);
+                const newShoppingItem = ref('');
+
+                const addShoppingItem = () => {
+                    if (!newShoppingItem.value) return;
+                    shoppingList.value.push({ name: newShoppingItem.value, checked: false });
+                    newShoppingItem.value = '';
+                };
+                
+                const removeShoppingItem = (index) => {
+                    shoppingList.value.splice(index, 1);
+                };
+
+                return {
+                    currentTab,
+                    tabs,
+                    currentTitle,
+                    currentDate,
+                    schedule,
+                    expenses,
+                    newExpense,
+                    addExpense,
+                    shoppingList,
+                    newShoppingItem,
+                    addShoppingItem,
+                    removeShoppingItem
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
