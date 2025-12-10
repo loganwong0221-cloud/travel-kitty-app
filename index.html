@@ -15,38 +15,50 @@
                 extend: {
                     colors: {
                         kitty: {
-                            bg: '#FFF5F7',      /* 極淺粉底色 */
+                            bg: '#FFF5F7',
                             card: '#FFFFFF',    
-                            text: '#5D4037',    /* 深咖啡文字 */
-                            pink: '#FF9EAC',    /* 柔和粉紅 */
-                            hot: '#FF69B4',     /* 亮粉紅 */
-                            red: '#E60033'      /* Kitty 蝴蝶結紅 */
+                            text: '#5D4037',
+                            pink: '#FF9EAC',
+                            hot: '#FF69B4',
+                            red: '#E60033'
                         }
                     },
                     fontFamily: {
                         sans: ['Varela Round', 'Arial', 'sans-serif'],
                     },
-                    boxShadow: {
-                        'cute': '0 8px 20px rgba(255, 158, 172, 0.25)',
+                    backgroundImage: {
+                        'kitty-pattern': "url('https://i.pinimg.com/originals/9c/68/73/9c68739a618683e6592209d846567946.png')",
                     }
                 }
             }
         }
     </script>
     <style>
-        body { background-color: #fce4ec; }
+        /* 背景設定：使用重複的 Kitty 圖案 */
+        body { 
+            background-color: #fce4ec;
+            background-image: url('https://i.pinimg.com/736x/b2/89/3e/b2893e48810619198647c01a2f605063.jpg'); 
+            background-size: 150px; /* 控制圖案大小 */
+            background-repeat: repeat;
+        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 玻璃擬態效果，讓卡片浮在圖案上 */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+        }
     </style>
 </head>
 <body class="text-kitty-text h-screen flex justify-center overflow-hidden font-sans">
 
-    <div id="app" class="w-full max-w-md bg-kitty-bg h-full flex flex-col shadow-2xl relative overflow-hidden border-x-4 border-white">
+    <!-- 主容器 -->
+    <div id="app" class="w-full max-w-md h-full flex flex-col shadow-2xl relative overflow-hidden border-x-4 border-white glass-effect">
         
-        <!-- Header: 真正的 Kitty 圖片 -->
+        <!-- Header -->
         <header class="bg-kitty-pink px-5 py-3 shadow-md z-10 flex justify-between items-center flex-shrink-0 rounded-b-[2rem]">
             <div class="flex items-center gap-2">
-                <!-- Kitty 頭像圖片 -->
                 <img src="https://upload.wikimedia.org/wikipedia/en/thumb/0/05/Hello_kitty_character_portrait.png/220px-Hello_kitty_character_portrait.png" 
                      class="w-10 h-10 object-contain drop-shadow-md bg-white rounded-full p-1" 
                      alt="Kitty">
@@ -57,8 +69,8 @@
             </div>
         </header>
 
-        <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-24">
+        <!-- Main Content (背景透明，透出底下的圖案) -->
+        <main class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-24 bg-white/60">
             
             <!-- 1. 行程表功能 -->
             <div v-if="currentTab === 'schedule'" class="space-y-4">
@@ -67,7 +79,7 @@
                 </button>
 
                 <!-- 表單 -->
-                <div v-if="showScheduleForm" class="bg-white p-5 rounded-3xl shadow-cute border-2 border-kitty-pink relative">
+                <div v-if="showScheduleForm" class="bg-white p-5 rounded-3xl shadow-lg border-2 border-kitty-pink relative">
                     <button @click="showScheduleForm = false" class="absolute top-3 right-3 text-kitty-pink"><i class="ri-close-circle-fill text-2xl"></i></button>
                     <h3 class="text-center text-kitty-pink font-bold mb-4">✨ New Plan ✨</h3>
                     <div class="space-y-3">
@@ -117,7 +129,7 @@
             </div>
 
             <!-- 2. 地圖 -->
-            <div v-if="currentTab === 'map'" class="h-full bg-white rounded-3xl overflow-hidden shadow-cute border-4 border-white relative min-h-[500px]">
+            <div v-if="currentTab === 'map'" class="h-full bg-white rounded-3xl overflow-hidden shadow-lg border-4 border-white relative min-h-[500px]">
                 <iframe width="100%" height="100%" frameborder="0" scrolling="no" src="https://maps.google.com/maps?q=Tokyo&t=&z=13&ie=UTF8&iwloc=&output=embed"></iframe>
                 <div class="absolute top-4 left-4 bg-white px-3 py-1 rounded-full shadow-lg text-kitty-pink font-bold border-2 border-kitty-pink text-xs">
                     📍 Kitty Map
@@ -126,7 +138,7 @@
 
             <!-- 3. 記帳 -->
             <div v-if="currentTab === 'finance'" class="space-y-4">
-                <div class="bg-white p-5 rounded-3xl shadow-cute border border-pink-100">
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-pink-100">
                     <div class="mb-3">
                         <label class="text-xs text-kitty-pink font-bold ml-1">金額 $$$</label>
                         <input type="number" v-model="newExpense.amount" placeholder="0.00" class="w-full text-3xl font-bold text-kitty-text border-b-2 border-pink-100 outline-none focus:border-kitty-pink pb-1 bg-transparent">
@@ -145,8 +157,8 @@
                 </div>
                 <div class="space-y-2">
                     <div class="flex justify-between items-end px-2">
-                        <h3 class="text-xs font-bold text-gray-400">Spending Log</h3>
-                        <span class="text-kitty-red font-bold">Total: ${{ totalExpense }}</span>
+                        <h3 class="text-xs font-bold text-gray-500 bg-white/50 px-2 rounded">Spending Log</h3>
+                        <span class="text-kitty-red font-bold bg-white/50 px-2 rounded">Total: ${{ totalExpense }}</span>
                     </div>
                     <div v-for="(exp, index) in expenses" :key="index" class="bg-white p-3 rounded-2xl flex justify-between items-center shadow-sm border border-pink-50">
                         <div class="flex items-center gap-3">
@@ -165,9 +177,9 @@
                 </div>
             </div>
 
-            <!-- 4. 購物 -->
+            <!-- 4. 購物 (圖標修復) -->
             <div v-if="currentTab === 'shopping'" class="space-y-3">
-                <div class="bg-white p-2 rounded-full shadow-cute flex items-center px-4 border-2 border-kitty-pink">
+                <div class="bg-white p-2 rounded-full shadow-sm flex items-center px-4 border-2 border-kitty-pink">
                     <input v-model="newShoppingItem" @keyup.enter="addShoppingItem" type="text" placeholder="想買的東西..." class="flex-1 bg-transparent outline-none text-sm text-kitty-text">
                     <button @click="addShoppingItem" class="text-kitty-pink hover:text-kitty-hot"><i class="ri-add-circle-fill text-3xl"></i></button>
                 </div>
@@ -183,14 +195,13 @@
             </div>
         </main>
 
-        <!-- 修正後的導航欄：使用 Grid 排版確保不跑版 -->
+        <!-- Navigation (圖標修復) -->
         <nav class="bg-white rounded-t-[2rem] absolute bottom-0 w-full shadow-[0_-5px_20px_rgba(255,182,193,0.4)] z-50">
             <div class="grid grid-cols-4 w-full h-20 items-center">
                 <button v-for="tab in tabs" :key="tab.id" 
                         @click="currentTab = tab.id" 
                         class="flex flex-col items-center justify-center gap-1 h-full w-full transition-all duration-300 relative group">
                     
-                    <!-- 選中時的粉紅背景泡泡 -->
                     <div v-if="currentTab === tab.id" 
                          class="absolute top-2 w-12 h-12 bg-pink-100 rounded-full -z-10 animate-pulse"></div>
 
@@ -214,11 +225,12 @@
                 const currentTab = ref('schedule');
                 const currentDate = new Date().toLocaleDateString('zh-HK');
                 
+                // 這裡更換了最穩定的圖標名稱
                 const tabs = [
                     { id: 'schedule', name: '行程', icon: 'ri-calendar-todo-fill' },
                     { id: 'map', name: '地圖', icon: 'ri-map-pin-user-fill' },
                     { id: 'finance', name: '記帳', icon: 'ri-wallet-3-fill' },
-                    { id: 'shopping', name: '購物', icon: 'ri-shopping-bag-heart-fill' }
+                    { id: 'shopping', name: '購物', icon: 'ri-shopping-basket-fill' } // 改用 basket 圖標，通常更穩定
                 ];
 
                 const currentTitle = computed(() => {
