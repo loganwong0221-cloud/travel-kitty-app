@@ -3,273 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kitty Travel App</title>
-    <!-- 引入穩定的 CSS 框架 -->
+    <title>Hello Kitty Trip Planner</title>
+    <!-- 引入 Tailwind CSS 與 Vue -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Vue 3 (使用更穩定的 CDN) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
-    <!-- 引入圖標庫 -->
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        pink: {
-                            50: '#fff0f5',
-                            100: '#ffdee8',
-                            200: '#ffc2d4',
-                            300: '#ff99b6',
-                            400: '#ff6692',
-                            500: '#ff336e', // Kitty Hot Pink
-                            600: '#e6004c',
-                        },
-                        brown: {
-                            800: '#5d4037', // Kitty Text Color
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入圖標庫 FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* 1. 安全背景：使用 CSS 繪製可愛格紋 (不依賴外部圖片) */
+        /* 根據圖片分析定義的配色 */
+        :root {
+            --kitty-bg: #f4d9de;
+            --kitty-text: #222629;
+            --kitty-accent: #ffffff;
+            --kitty-soft: #f5dadf;
+        }
+        
         body {
-            background-color: #fff0f5;
-            background-image: 
-                linear-gradient(90deg, rgba(255,182,193,0.3) 1px, transparent 1px),
-                linear-gradient(rgba(255,182,193,0.3) 1px, transparent 1px);
-            background-size: 20px 20px;
+            background-color: var(--kitty-bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--kitty-text);
         }
-        /* 2. 玻璃擬態面板 */
-        .glass {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+
+        /* 自定義可愛滾動條 */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-        /* 3. 隱藏滾動條 */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.3);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(34, 38, 41, 0.2);
+            border-radius: 10px;
+        }
     </style>
 </head>
-<!-- 確保 body 佔滿螢幕且不能滾動 (由內部 div 滾動) -->
-<body class="h-[100dvh] w-screen overflow-hidden text-brown-800 font-sans flex justify-center">
+<body>
 
-    <div id="app" class="w-full max-w-md h-full flex flex-col relative bg-white/50 border-x border-white shadow-2xl">
+<div id="app" class="min-h-screen flex flex-col max-w-md mx-auto bg-white/30 shadow-2xl overflow-hidden relative">
+    
+    <!-- 頂部裝飾區 -->
+    <header class="relative bg-white pt-10 pb-6 px-6 rounded-b-[2.5rem] shadow-sm z-10">
+        <div class="flex flex-col items-center">
+            <!-- 圖片容器：嵌入用戶提供的 Hello Kitty 圖片 -->
+            <div class="w-28 h-28 rounded-full p-1 bg-[#f4d9de] mb-3 shadow-md">
+                <div class="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center border-4 border-white">
+                    <!-- 這裡會顯示您的圖片 -->
+                    <img src="image.jpeg" alt="Hello Kitty" class="w-full h-full object-cover">
+                </div>
+            </div>
+            <h1 class="text-2xl font-black text-[#222629] tracking-wider">My Trip</h1>
+            <p class="text-xs font-bold text-gray-400 mt-1 tracking-widest">HELLO KITTY EDITION</p>
+        </div>
         
-        <!-- Header -->
-        <header class="h-16 bg-pink-400 flex items-center justify-between px-4 shadow-md z-20 shrink-0 rounded-b-3xl">
-            <div class="flex items-center gap-2 text-white">
-                <div class="w-9 h-9 bg-white rounded-full flex items-center justify-center text-xl shadow-sm">🎀</div>
-                <h1 class="text-lg font-bold tracking-wide">{{ currentTitle }}</h1>
-            </div>
-            <div class="bg-white/90 text-pink-500 text-xs font-bold px-3 py-1 rounded-full">
-                {{ currentDate }}
-            </div>
-        </header>
+        <!-- 裝飾性背景圓點 -->
+        <div class="absolute top-4 left-4 w-4 h-4 bg-[#f4d9de] rounded-full opacity-60"></div>
+        <div class="absolute top-10 right-6 w-6 h-6 bg-[#f4d9de] rounded-full opacity-60"></div>
+    </header>
 
-        <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto p-4 pb-28 no-scrollbar space-y-4">
-            
-            <!-- Tab: Schedule -->
-            <div v-if="currentTab === 'schedule'" class="space-y-4">
-                <button v-if="!showForm" @click="showForm = true" class="w-full py-3 bg-white border-2 border-dashed border-pink-300 rounded-2xl text-pink-400 font-bold shadow-sm active:scale-95 transition">
-                    <i class="ri-add-line text-lg"></i> 新增行程
-                </button>
-
-                <!-- Form -->
-                <div v-if="showForm" class="bg-white p-4 rounded-2xl shadow-lg border-2 border-pink-200 animate-bounce-in">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="font-bold text-pink-500">✨ New Plan</h3>
-                        <button @click="showForm = false" class="text-gray-400"><i class="ri-close-circle-fill text-2xl"></i></button>
+    <!-- 主要功能按鈕區 -->
+    <main class="flex-1 px-6 py-8 space-y-4 overflow-y-auto">
+        
+        <!-- 1. 行程按鈕 (Itinerary) -->
+        <button class="w-full group relative overflow-hidden bg-white rounded-2xl p-5 shadow-sm border-2 border-transparent hover:border-[#f4d9de] transition-all duration-300 transform hover:-translate-y-1">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-[#f4d9de]/30 flex items-center justify-center text-[#222629]">
+                        <i class="fa-solid fa-map-location-dot text-xl"></i>
                     </div>
-                    <div class="space-y-3">
-                        <input v-model="newItem.title" type="text" placeholder="標題..." class="w-full bg-pink-50 p-3 rounded-xl outline-none border border-transparent focus:border-pink-300">
-                        <div class="relative">
-                            <input v-model="newItem.location" @change="fetchWeather" type="text" placeholder="地點 (英文, 例: Tokyo)" class="w-full bg-pink-50 p-3 rounded-xl outline-none border border-transparent focus:border-pink-300">
-                            <i class="ri-search-line absolute right-3 top-3.5 text-gray-400"></i>
-                        </div>
-                        <div class="flex gap-2">
-                            <input v-model="newItem.time" type="time" class="bg-pink-50 p-3 rounded-xl outline-none">
-                            <div class="flex-1 bg-pink-50 rounded-xl flex items-center justify-center text-sm text-gray-500">
-                                {{ weatherStatus || newItem.weather }}
-                            </div>
-                        </div>
-                        <button @click="addItem" class="w-full bg-pink-400 text-white py-3 rounded-xl font-bold shadow-md active:bg-pink-600 transition">確認加入</button>
+                    <div class="text-left">
+                        <h3 class="font-bold text-lg text-[#222629]">行程規劃</h3>
+                        <p class="text-xs text-gray-500">Itinerary & Maps</p>
                     </div>
                 </div>
-
-                <!-- List -->
-                <div v-for="(item, idx) in sortedSchedule" :key="idx" class="bg-white p-4 rounded-2xl shadow-sm border border-pink-100 flex flex-col relative">
-                    <div class="flex items-start gap-3">
-                        <div class="flex flex-col items-center bg-pink-50 rounded-xl p-2 min-w-[3.5rem]">
-                            <span class="text-xl">{{ item.weather }}</span>
-                            <span class="text-xs font-bold text-pink-500">{{ item.time }}</span>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-bold text-brown-800">{{ item.title }}</h3>
-                            <div v-if="item.location" class="flex items-center gap-1 text-xs text-gray-400 mt-1">
-                                <i class="ri-map-pin-line text-pink-400"></i> {{ item.location }}
-                                <span v-if="item.temp" class="bg-blue-100 text-blue-500 px-1 rounded">{{ item.temp }}°C</span>
-                            </div>
-                        </div>
-                        <button @click="deleteSchedule(idx)" class="text-gray-300 hover:text-red-500"><i class="ri-delete-bin-line"></i></button>
-                    </div>
-                    <div v-if="item.location" class="mt-2">
-                         <button @click="item.showMap = !item.showMap" class="w-full text-xs text-pink-400 bg-pink-50 py-1.5 rounded-lg font-bold">
-                            {{ item.showMap ? '收起地圖' : '📍 查看地圖' }}
-                        </button>
-                        <iframe v-if="item.showMap" class="w-full h-40 mt-2 rounded-xl border-2 border-pink-100" :src="`https://maps.google.com/maps?q=${item.location}&t=&z=15&ie=UTF8&iwloc=&output=embed`" frameborder="0"></iframe>
-                    </div>
-                </div>
+                <i class="fa-solid fa-chevron-right text-gray-300"></i>
             </div>
+        </button>
 
-            <!-- Tab: Map -->
-            <div v-if="currentTab === 'map'" class="h-full bg-white rounded-3xl overflow-hidden shadow-md border-4 border-white relative min-h-[500px]">
-                <iframe width="100%" height="100%" frameborder="0" src="https://maps.google.com/maps?q=Tokyo&t=&z=13&ie=UTF8&iwloc=&output=embed"></iframe>
-            </div>
-
-            <!-- Tab: Finance -->
-            <div v-if="currentTab === 'finance'" class="space-y-4">
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-pink-100">
-                    <div class="text-right text-xs font-bold text-pink-500 mb-2">Total: ${{ totalExpense }}</div>
-                    <div class="flex gap-2 mb-3">
-                         <input v-model="newExp.desc" type="text" placeholder="項目" class="flex-1 bg-pink-50 p-2 rounded-xl text-sm outline-none">
-                         <input v-model="newExp.amount" type="number" placeholder="$" class="w-20 bg-pink-50 p-2 rounded-xl text-sm outline-none">
+        <!-- 2. 記帳按鈕 (Bookkeeping) -->
+        <button class="w-full group relative overflow-hidden bg-white rounded-2xl p-5 shadow-sm border-2 border-transparent hover:border-[#f4d9de] transition-all duration-300 transform hover:-translate-y-1">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-[#f4d9de]/30 flex items-center justify-center text-[#222629]">
+                        <i class="fa-solid fa-wallet text-xl"></i>
                     </div>
-                    <button @click="addExp" class="w-full bg-pink-400 text-white py-2 rounded-xl font-bold text-sm shadow-md">記帳</button>
-                </div>
-                <div class="space-y-2">
-                    <div v-for="(exp, idx) in expenses" :key="idx" class="bg-white p-3 rounded-xl flex justify-between items-center shadow-sm border border-pink-50">
-                        <span class="font-bold text-sm">{{ exp.desc }}</span>
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-pink-500">-${{ exp.amount }}</span>
-                            <button @click="delExp(idx)" class="text-gray-300"><i class="ri-delete-bin-line"></i></button>
-                        </div>
+                    <div class="text-left">
+                        <h3 class="font-bold text-lg text-[#222629]">旅行記帳</h3>
+                        <p class="text-xs text-gray-500">Expenses</p>
                     </div>
                 </div>
+                <i class="fa-solid fa-chevron-right text-gray-300"></i>
             </div>
+        </button>
 
-             <!-- Tab: Shopping -->
-             <div v-if="currentTab === 'shopping'" class="space-y-3">
-                <div class="bg-white p-2 rounded-full shadow-sm flex items-center px-4 border-2 border-pink-200">
-                    <input v-model="newShop" @keyup.enter="addShop" type="text" placeholder="購物清單..." class="flex-1 bg-transparent outline-none text-sm">
-                    <button @click="addShop" class="text-pink-500"><i class="ri-add-circle-fill text-3xl"></i></button>
-                </div>
-                <div class="mt-4 space-y-2">
-                    <div v-for="(item, idx) in shopping" :key="idx" class="flex items-center p-3 bg-white rounded-xl shadow-sm border border-transparent" :class="{'opacity-50': item.checked}">
-                        <div @click="item.checked = !item.checked" class="mr-3 text-2xl text-pink-400">
-                            <i :class="item.checked ? 'ri-checkbox-circle-fill text-gray-300' : 'ri-heart-fill'"></i>
-                        </div>
-                        <span :class="{'line-through': item.checked}" class="flex-1 text-sm font-bold">{{ item.name }}</span>
-                        <button @click="delShop(idx)" class="text-gray-300"><i class="ri-close-line"></i></button>
+        <!-- 3. 購物清單 (Shopping) -->
+        <button class="w-full group relative overflow-hidden bg-white rounded-2xl p-5 shadow-sm border-2 border-transparent hover:border-[#f4d9de] transition-all duration-300 transform hover:-translate-y-1">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-[#f4d9de]/30 flex items-center justify-center text-[#222629]">
+                        <i class="fa-solid fa-bag-shopping text-xl"></i>
+                    </div>
+                    <div class="text-left">
+                        <h3 class="font-bold text-lg text-[#222629]">購物清單</h3>
+                        <p class="text-xs text-gray-500">Shopping List</p>
                     </div>
                 </div>
+                <i class="fa-solid fa-chevron-right text-gray-300"></i>
             </div>
+        </button>
 
-        </main>
+    </main>
 
-        <!-- Navigation (Fixed Bottom) -->
-        <nav class="h-20 bg-white shadow-[0_-5px_20px_rgba(0,0,0,0.05)] rounded-t-3xl z-30 shrink-0">
-            <div class="grid grid-cols-4 h-full">
-                <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id" class="flex flex-col items-center justify-center gap-1 relative group">
-                    <div v-if="currentTab === tab.id" class="absolute -top-3 w-10 h-1 bg-pink-400 rounded-b-lg"></div>
-                    <i :class="tab.icon" class="text-2xl transition-transform" :class="currentTab === tab.id ? 'text-pink-500 -translate-y-1' : 'text-gray-300'"></i>
-                    <span class="text-[10px] font-bold" :class="currentTab === tab.id ? 'text-pink-500' : 'text-gray-400'">{{ tab.name }}</span>
+    <!-- 底部導航欄 -->
+    <nav class="bg-white px-6 py-4 rounded-t-[2rem] shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+        <div class="flex justify-around items-center">
+            <button class="text-[#222629] flex flex-col items-center gap-1">
+                <i class="fa-solid fa-house text-xl"></i>
+            </button>
+            <button class="text-gray-300 hover:text-[#f4d9de] transition-colors flex flex-col items-center gap-1">
+                <i class="fa-solid fa-heart text-xl"></i>
+            </button>
+            <!-- 中間凸起的大按鈕 -->
+            <div class="relative -top-8">
+                <button class="w-14 h-14 bg-[#222629] rounded-full text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform border-4 border-[#f4d9de]">
+                    <i class="fa-solid fa-plus text-xl"></i>
                 </button>
             </div>
-        </nav>
+            <button class="text-gray-300 hover:text-[#f4d9de] transition-colors flex flex-col items-center gap-1">
+                <i class="fa-solid fa-bell text-xl"></i>
+            </button>
+            <button class="text-gray-300 hover:text-[#f4d9de] transition-colors flex flex-col items-center gap-1">
+                <i class="fa-solid fa-user text-xl"></i>
+            </button>
+        </div>
+    </nav>
 
-    </div>
+</div>
 
-    <script>
-        const { createApp, ref, computed } = Vue;
-
-        createApp({
-            setup() {
-                const currentTab = ref('schedule');
-                const currentDate = new Date().toLocaleDateString('zh-HK');
-                const tabs = [
-                    { id: 'schedule', name: '行程', icon: 'ri-calendar-event-fill' },
-                    { id: 'map', name: '地圖', icon: 'ri-map-pin-2-fill' },
-                    { id: 'finance', name: '記帳', icon: 'ri-wallet-3-fill' },
-                    { id: 'shopping', name: '購物', icon: 'ri-shopping-bag-3-fill' }
-                ];
-
-                const currentTitle = computed(() => {
-                    const t = tabs.find(x => x.id === currentTab.value);
-                    return t ? t.name : 'Kitty App';
-                });
-
-                // Schedule Logic
-                const schedule = ref([{ time: '10:00', title: 'Sanrio Puroland', location: 'Tokyo', weather: '🎀', showMap:false }]);
-                const showForm = ref(false);
-                const newItem = ref({ time: '', title: '', location: '', weather: '☀️', temp: '' });
-                const weatherStatus = ref('');
-
-                const fetchWeather = async () => {
-                    if(!newItem.value.location) return;
-                    weatherStatus.value = '查詢中...';
-                    try {
-                        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${newItem.value.location}&count=1&language=en&format=json`);
-                        const data = await res.json();
-                        if(!data.results) { weatherStatus.value = '未知地點'; return; }
-                        
-                        const { latitude, longitude } = data.results[0];
-                        const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
-                        const wData = await wRes.json();
-                        
-                        const code = wData.current_weather.weathercode;
-                        let icon = '☀️';
-                        if(code > 3) icon = '☁️';
-                        if(code > 50) icon = '🌧️';
-                        
-                        newItem.value.weather = icon;
-                        newItem.value.temp = wData.current_weather.temperature;
-                        weatherStatus.value = `${wData.current_weather.temperature}°C ${icon}`;
-                    } catch(e) { weatherStatus.value = 'Error'; }
-                };
-
-                const addItem = () => {
-                    if(!newItem.value.title) return;
-                    schedule.value.push({...newItem.value, showMap: false});
-                    newItem.value = { time: '', title: '', location: '', weather: '☀️', temp: '' };
-                    showForm.value = false;
-                    weatherStatus.value = '';
-                };
-                const deleteSchedule = (idx) => schedule.value.splice(idx, 1);
-                const sortedSchedule = computed(() => [...schedule.value].sort((a,b) => a.time.localeCompare(b.time)));
-
-                // Finance Logic
-                const expenses = ref([{ desc: '可愛髮夾', amount: 120 }]);
-                const newExp = ref({ desc: '', amount: '' });
-                const addExp = () => {
-                    if(!newExp.value.desc) return;
-                    expenses.value.unshift({...newExp.value});
-                    newExp.value = { desc: '', amount: '' };
-                };
-                const delExp = (idx) => expenses.value.splice(idx, 1);
-                const totalExpense = computed(() => expenses.value.reduce((a,b) => a + Number(b.amount), 0));
-
-                // Shopping Logic
-                const shopping = ref([{ name: 'Kitty 娃娃', checked: false }]);
-                const newShop = ref('');
-                const addShop = () => {
-                    if(!newShop.value) return;
-                    shopping.value.push({ name: newShop.value, checked: false });
-                    newShop.value = '';
-                };
-                const delShop = (idx) => shopping.value.splice(idx, 1);
-
-                return {
-                    currentTab, currentDate, currentTitle, tabs,
-                    schedule, sortedSchedule, showForm, newItem, weatherStatus, fetchWeather, addItem, deleteSchedule,
-                    expenses, newExp, addExp, delExp, totalExpense,
-                    shopping, newShop, addShop, delShop
-                };
+<script>
+    const { createApp } = Vue
+    createApp({
+        data() {
+            return {
+                message: 'Hello Kitty App'
             }
-        }).mount('#app');
-    </script>
+        }
+    }).mount('#app')
+</script>
 </body>
 </html>
